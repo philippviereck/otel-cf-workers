@@ -72,7 +72,12 @@ function endSpan(
 function startExport(currentState: TraceCompleteState, { args }: StartExportAction): ExportingState | DoneState {
 	const { exporter, tailSampler, postProcessor } = args
 	const { traceId, localRootSpan, completedSpans: spans } = currentState
-	const shouldExport = tailSampler({ traceId, localRootSpan, spans })
+	let shouldExport = false
+	try {
+		shouldExport = tailSampler({ traceId, localRootSpan, spans })
+	} catch (e) {
+		console.error(e)
+	}
 	if (shouldExport) {
 		const exportSpans = postProcessor(spans)
 		const promise = new Promise<ExportResult>((resolve) => {

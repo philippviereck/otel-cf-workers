@@ -45,7 +45,13 @@ export class WorkerTracer implements Tracer {
 		const sanitisedAttrs = sanitizeAttributes(options.attributes)
 
 		const sampler = getActiveConfig().sampling.headSampler
-		const samplingDecision = sampler.shouldSample(context, traceId, name, spanKind, sanitisedAttrs, [])
+		let samplingDecision
+		try {
+			samplingDecision = sampler.shouldSample(context, traceId, name, spanKind, sanitisedAttrs, [])
+		} catch (e) {
+			console.error('sampler.shouldSample', e)
+			samplingDecision = { decision: SamplingDecision.NOT_RECORD } // TODO: is this the right thing to do?
+		}
 		const { decision, traceState, attributes: attrs } = samplingDecision
 		const attributes = Object.assign({}, sanitisedAttrs, attrs)
 
@@ -85,6 +91,7 @@ export class WorkerTracer implements Tracer {
 		fn: F,
 	): ReturnType<F>
 	startActiveSpan<F extends (span: Span) => ReturnType<F>>(name: string, ...args: unknown[]): ReturnType<F> {
+		console.log('startActiveSpan', name, args)
 		const options = args.length > 1 ? (args[0] as SpanOptions) : undefined
 		const parentContext = args.length > 2 ? (args[1] as Context) : api_context.active()
 		const fn = args[args.length - 1] as F

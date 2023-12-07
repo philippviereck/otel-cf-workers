@@ -11,5 +11,24 @@ export function setConfig(config: ResolvedTraceConfig, ctx = context.active()) {
 
 export function getActiveConfig(): ResolvedTraceConfig {
 	const config = context.active().getValue(configSymbol) as ResolvedTraceConfig
-	return config
+	if (!config) {
+		console.warn('No active configuration found!')
+	}
+	return (
+		config ?? {
+			fetch: { includeTraceContext: true },
+			handlers: { fetch: { acceptTraceContext: true } },
+			sampling: { headSampler: {} },
+			service: { name: 'testint-inboxed' },
+			spanProcessors: [
+				{
+					traceLookup: {},
+					localRootSpanLookup: {},
+					inprogressExports: {},
+					exporter: null,
+				},
+			],
+			propagator: {},
+		}
+	)
 }
